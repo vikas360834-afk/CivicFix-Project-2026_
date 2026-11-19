@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             Int                  @id @default(autoincrement())
+  name           String
+  email          String               @unique
+  password       String
+  role           String               @default("USER")
+  ward           String?
+  department     String?
+  phone          String?
+  createdAt      DateTime             @default(now())
+  issues         Issue[]
+  assignedIssues Issue[]              @relation("AssignedEngineer")
+  approvedIssues Issue[]              @relation("ApprovedBy")
+  statusChanges  IssueStatusHistory[]
+  comments       Comment[]
+  votes          Vote[]
+}
+
+model Issue {
+  id              Int                  @id @default(autoincrement())
+  title           String
+  description     String
+  category        String
+  location        String
+  ward            String?
+  landmark        String?
+  latitude        Float?
+  longitude       Float?
+  status          String               @default("PENDING_APPROVAL")
+  priority        String               @default("MEDIUM")
+  upvotes         Int                  @default(0)
+  aiCategory      String?
+  aiPriority      String?
+  aiDepartment    String?
+  approvedById    Int?
+  approvedBy      User?                @relation("ApprovedBy", fields: [approvedById], references: [id])
+  approvedAt      DateTime?
+  rejectionReason String?
+  assignedToId    Int?
+  assignedTo      User?                @relation("AssignedEngineer", fields: [assignedToId], references: [id])
+  assignedAt      DateTime?
+  startedAt       DateTime?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  resolvedAt      DateTime?
+  resolutionNote  String?
+  userId          Int
+  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments        Comment[]
+  votes           Vote[]
+  images          IssueImage[]
+  statusHistory   IssueStatusHistory[]
+
+  @@index([status])
+  @@index([ward])
+  @@index([category])
+  @@index([createdAt])
+}
+
+model IssueImage {
+  id        Int      @id @default(autoincrement())
+  url       String
+  createdAt DateTime @default(now())
+  issueId   Int
+  issue     Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+}
+
+model Comment {
+  id         Int      @id @default(autoincrement())
+  body       String
+  isOfficial Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  issueId    Int
+  issue      Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+}
+
+model Vote {
+  id      Int   @id @default(autoincrement())
+  userId  Int
+  user    User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  issueId Int
+  issue   Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, issueId])
+}
+
+model IssueStatusHistory {
+  id          Int      @id @default(autoincrement())
+  issueId     Int
+  issue       Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  fromStatus  String?
+  toStatus    String
+  changedById Int
+  changedBy   User     @relation(fields: [changedById], references: [id])
+  note        String?
+  createdAt   DateTime @default(now())
+
+  @@index([issueId])
+}
+
+model AuthLog {
+  id            Int      @id @default(autoincrement())
+  eventType     String
+  email         String?
+  role          String?
+  ipAddress     String?
+  userAgent     String?
+  failureReason String?
+  createdAt     DateTime @default(now())
+
+  @@index([eventType])
+  @@index([createdAt])
+  @@index([failureReason])
+}

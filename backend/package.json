@@ -1,0 +1,29 @@
+{
+  "name": "civicfix-backend",
+  "version": "1.0.0",
+  "description": "CivicFix REST API (Express + Prisma + SQLite)",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "node --watch --watch-path=src src/server.js",
+    "start": "node src/server.js",
+    "seed": "node seed.js",
+    "test": "node test-chat.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "express-rate-limit": "^8.7.1",
+    "express-validator": "^7.2.0",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "multer": "^2.4.0"
+  },
+  "devDependencies": {
+    "prisma": "^6.5.0"
+  }
+}

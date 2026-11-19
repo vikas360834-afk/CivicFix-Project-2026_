@@ -1,0 +1,69 @@
+CivicFix Version 2.0.0 (Release Upgrade)
+Release Date: 2026-10-16
+Architecture: Full-Stack React 18 + Node/Express (ESM) + Prisma + SQLite
+
+CHANGELOG (v2.0.0):
+1. ROLES & AUTH REFACTORING:
+   - Replaced all legacy OFFICIAL and CITIZEN roles with three explicit roles: USER (Citizen), ADMIN, and ENGINEER.
+   - Fixed registration security hole: public self-registration creates USER accounts only (role selection removed from register payload).
+   - Rebuilt Login page with 3 separated role tabs (Citizen, Admin, Engineer), each with custom icon, description, and one-click demo credentials.
+   - Enforced role mismatch rejection on backend (returns 403 when chosen tab does not match account role).
+   - Dynamic post-login redirects: USER -> /issues, ADMIN -> /admin, ENGINEER -> /engineer.
+
+2. STRICT 5-STAGE ISSUE LIFECYCLE:
+   - Issues begin in PENDING_APPROVAL. Not visible to the public or on live map until verified.
+   - Admin approves issue -> transitions to OPEN.
+   - Admin assigns issue to an engineer -> transitions to ASSIGNED.
+   - Assigned engineer begins work -> transitions to IN_PROGRESS.
+   - Assigned engineer completes work -> transitions to RESOLVED (requires resolution note and verification after-photo).
+   - Admin may instead reject an issue with mandatory reason -> transitions to REJECTED.
+   - Enforced legal state transitions on server; illegal jumps return 409 Conflict.
+   - Added IssueStatusHistory model to record every transition with who, when, and note.
+
+3. SECURITY & ENDPOINT ACCESS:
+   - Fully protected endpoints: GET /api/issues, GET /api/issues/:id, comments, and /api/stats/* now require valid JWT authentication (return 401 without token).
+   - Protected routes in frontend: /issues, /issues/:id, /map, /dashboard, /report, and /profile wrapped in ProtectedRoute.
+   - /admin is restricted to ADMIN role.
+   - New /engineer page is restricted to ENGINEER role.
+   - Public routes strictly limited to /, /login, /register, and /404.
+   - Role-scoped stats: Admin sees city-wide analytics, User sees personal statistics, Engineer sees assigned workload.
+
+4. RESOLVED ISSUES ISOLATION:
+   - Backend buildWhere in listIssues strictly filters public feed and map to OPEN, ASSIGNED, and IN_PROGRESS.
+   - RESOLVED, REJECTED, and PENDING_APPROVAL are completely excluded from public feed.
+   - Removed "Resolved" option from the Issues feed status filter.
+   - Resolved issues remain accessible in 3 designated locations: reporter's Profile (My Issues), Admin Panel Archive, and Dashboard analytics.
+
+5. 100% STATIC MARKETING LANDING PAGE:
+   - Rebuilt Home.jsx with zero calls to /issues or /stats so logged-out visitors never trigger protected endpoints.
+   - Compressed and optimized all public images to WebP/JPEG with lazy-loading.
+   - Structured all 11 required sections in exact sequence: Hero, About, How It Works, 3 Role Cards, Features Grid, 8 Categories, AI Spotlight, Transparency & Audit, Impact Numbers, FAQ Accordion, and Footer.
+
+6. ROLE SCREENS & WORKSPACES:
+   - Citizen Report: Shows "Awaiting Admin Approval" banner with a 4-step lifecycle progress tracker.
+   - Citizen Profile: "My Issues" list with status badges, rejection reason callouts, and collapsible history timelines.
+   - Admin Panel: 5-tab Command Center (Pending Approvals with duplicate detection <100m/14d & bulk approve, Active Issues, Assignments & Workload, Users & Engineers, Archive).
+   - Engineer Panel: Kanban My Work page with Assigned, In Progress, and Completed columns, stats strip (Assigned, In Progress, Resolved this month, Avg fix time), directions links, and Mark Resolved modal.
+   - Issue Detail: Vertical status timeline from IssueStatusHistory, assigned engineer details, approval info.
+   - Notification Bell in Navbar polling every 30-60 seconds for role-specific updates.
+
+7. INTERACTIVE MAP UPGRADE:
+   - Shows active issues only (with admin toggle to view resolved issues drawn muted).
+   - Consistent pin design: status color, category glyph, enlarged for critical priority, collapsible legend.
+   - Tuned clustering (maxClusterRadius: 45, disableClusteringAtZoom: 16, spiderfy on max zoom).
+   - Coordinate jitter for duplicate coordinates to prevent overlapping.
+   - Clean light basemap default. Heatmap and ward rings default to OFF with optional toggles.
+   - Right-click to report enabled for citizens.
+
+8. AI CHATBOT UPGRADE:
+   - Restructured into backend/src/services/chat/ (knowledge.js, context.js, queries.js, intents.js, formatter.js, index.js).
+   - Live Prisma database queries for counts, metrics, MoM trends, oldest issues, backlog age buckets, hotspots, ward comparisons, and workloads.
+   - Scored intent engine with entity extraction and 6-turn history memory.
+   - 56 automated test cases passing in test-chat.js (integrated into `npm test`).
+   - ChatWidget UI with role-aware suggestions, sessionStorage persistence, and structured card renderers.
+
+9. GLASS / LIQUID MORPHISM DESIGN SYSTEM:
+   - Unified emerald green theme with CSS variables in :root and .dark.
+   - Liquid morphing blobs, specular edge highlights, light-sweep hover effects.
+   - Solid fallbacks for browsers without backdrop-filter.
+   - Full support for prefers-reduced-motion and prefers-reduced-transparency.
